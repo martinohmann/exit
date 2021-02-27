@@ -40,6 +40,21 @@
 //     return
 //   }
 //
+// It is also possible to set a custom status handler via SetStatusHandler:
+//
+//   func main() {
+//     exit.SetStatusHandler(func(err error) (code int, handled bool) {
+//       var customErr CustomError
+//       if errors.As(err, &customErr) {
+//         return 123, true
+//       }
+//       return 0, false
+//     })
+//
+//     // Produces exit code 123 if someOperation returns CustomError.
+//     exit.Exit(someOperation())
+//   }
+//
 package exit
 
 import (
@@ -90,6 +105,10 @@ func (e *exitError) ExitCode() int { return e.code }
 // Status picks a suitable exit code for err. If err is nil the returned code
 // is 0. Otherwise it attempts to provide a meaningful exit code for err.
 //
+// If a custom status handler func was set via SetStatusHandler and it is
+// non-nil, this func is executed first to determine a suitable exit code.
+// Otherwise it proceeds to determine the exit code by the builtin rules below.
+//
 // Uses the standard library's errors.Is and errors.As functions to also
 // inspect wrapped errors.
 //
@@ -101,6 +120,12 @@ func (e *exitError) ExitCode() int { return e.code }
 //
 // All other errors produce exit code 1.
 func Status(err error) int {
+	if statusHandlerFn != nil {
+		if code, handled := statusHandlerFn(err); handled {
+			return code
+		}
+	}
+
 	var exitErr ExitError
 
 	switch {
@@ -115,8 +140,25 @@ func Status(err error) int {
 	}
 }
 
-// Overridden in tests.
-var osExit = os.Exit
+var (
+	// Overridden in tests.
+	osExit = os.Exit
+
+	statusHandlerFn StatusHandlerFunc
+)
+
+// StatusHandlerFunc may provide an exit code for err. If it determined a
+// suitable exit code for err it should signal this by setting the second
+// return value to true.
+type StatusHandlerFunc func(err error) (code int, handled bool)
+
+// SetStatusHandler sets a custom StatusHandlerFunc. Calling SetStatusHandler
+// is not goroutine-safe. Should be called early in main.
+//
+// See Status for more information.
+func SetStatusHandler(fn StatusHandlerFunc) {
+	statusHandlerFn = fn
+}
 
 // Exit is a convenience alternative for os.Exit. Calls os.Exit with the exit
 // code obtained from err. If err is nil this is equivalent to os.Exit(0). See

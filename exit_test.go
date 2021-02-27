@@ -8,11 +8,15 @@ import (
 	"os/exec"
 	"strconv"
 	"testing"
+
+	"github.com/spf13/pflag"
 )
 
 var errUntyped = errors.New("error")
 
-func wrapErr(err error) error { return fmt.Errorf("wrapped: %w", err) }
+func wrapErr(err error) error {
+	return fmt.Errorf("wrapped: %w", err)
+}
 
 func TestExit(t *testing.T) {
 	for _, testCase := range []struct {
@@ -25,8 +29,10 @@ func TestExit(t *testing.T) {
 		{name: "exit error", err: Error(127, errUntyped), code: 127},
 		{name: "wrapped exit error", err: wrapErr(Error(127, errUntyped)), code: 127},
 		{name: "nil exit error", err: Error(127, nil), code: 0},
-		{name: "flag help", err: flag.ErrHelp, code: 2},
-		{name: "wrapped flag help", err: wrapErr(flag.ErrHelp), code: 2},
+		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
+		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
+		{name: "pflag.ErrHelp", err: pflag.ErrHelp, code: 2},
+		{name: "wrapped pflag.Help", err: wrapErr(pflag.ErrHelp), code: 2},
 		{name: "exec.ExitError", err: execExitError(10), code: 10},
 		{name: "wrapped exec.ExitError", err: wrapErr(execExitError(3)), code: 3},
 	} {
@@ -62,6 +68,45 @@ func TestErrorp(t *testing.T) {
 		t.Errorf("got %#v, want ExitError", err)
 	} else if code := exitErr.ExitCode(); code != 127 {
 		t.Errorf("got ExitError with code %d, want 127", code)
+	}
+}
+
+func TestSetStatusHandler(t *testing.T) {
+	SetStatusHandler(func(err error) (code int, handled bool) {
+		var exitErr ExitError
+
+		switch {
+		case errors.As(err, &exitErr):
+			// for testing purposes just add 1 to the existing exit code.
+			return exitErr.ExitCode() + 1, true
+		default:
+			return 0, false
+		}
+	})
+	defer SetStatusHandler(nil)
+
+	for _, testCase := range []struct {
+		name string
+		err  error
+		code int
+	}{
+		{name: "no error", code: 0},
+		{name: "untyped error", err: errUntyped, code: 1},
+		{name: "exit error", err: Error(127, errUntyped), code: 128},
+		{name: "wrapped exit error", err: wrapErr(Error(127, errUntyped)), code: 128},
+		{name: "nil exit error", err: Error(127, nil), code: 0},
+		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
+		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
+		{name: "pflag.ErrHelp", err: pflag.ErrHelp, code: 2},
+		{name: "wrapped pflag.Help", err: wrapErr(pflag.ErrHelp), code: 2},
+		{name: "exec.ExitError", err: execExitError(10), code: 11},
+		{name: "wrapped exec.ExitError", err: wrapErr(execExitError(3)), code: 4},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			if got := Status(testCase.err); got != testCase.code {
+				t.Errorf("got %d, want %d", got, testCase.code)
+			}
+		})
 	}
 }
 
