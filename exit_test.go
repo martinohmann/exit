@@ -24,9 +24,9 @@ func TestExit(t *testing.T) {
 	}{
 		{name: "no error", code: 0},
 		{name: "untyped error", err: errUntyped, code: 1},
-		{name: "exit error", err: Error(127, errUntyped), code: 127},
-		{name: "wrapped exit error", err: wrapErr(Error(127, errUntyped)), code: 127},
-		{name: "nil exit error", err: Error(127, nil), code: 0},
+		{name: "ExitError", err: Error(127, errUntyped), code: 127},
+		{name: "wrapped ExitError", err: wrapErr(Error(127, errUntyped)), code: 127},
+		{name: "nil error wrapped in ExitError", err: Error(127, nil), code: 0},
 		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
 		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
 		{name: "exec.ExitError", err: execExitError(10), code: 10},
@@ -104,6 +104,10 @@ func TestErrorp(t *testing.T) {
 
 func TestSetErrorHandler(t *testing.T) {
 	SetErrorHandler(func(err error) (code int, handled bool) {
+		if err == nil {
+			t.Error("error handler called with nil error")
+		}
+
 		var exitErr ExitError
 
 		switch {
@@ -123,9 +127,9 @@ func TestSetErrorHandler(t *testing.T) {
 	}{
 		{name: "no error", code: 0},
 		{name: "untyped error", err: errUntyped, code: 1},
-		{name: "exit error", err: Error(127, errUntyped), code: 128},
-		{name: "wrapped exit error", err: wrapErr(Error(127, errUntyped)), code: 128},
-		{name: "nil exit error", err: Error(127, nil), code: 0},
+		{name: "ExitError", err: Error(127, errUntyped), code: 128},
+		{name: "wrapped ExitError", err: wrapErr(Error(127, errUntyped)), code: 128},
+		{name: "nil error wrapped in ExitError", err: Error(127, nil), code: 0},
 		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
 		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
 		{name: "exec.ExitError", err: execExitError(10), code: 11},

@@ -126,8 +126,9 @@ func (e *exitError) ExitCode() int { return e.code }
 // is 0. Otherwise it attempts to provide a meaningful exit code for err.
 //
 // If a custom error handler func was set via SetErrorHandler and it is
-// non-nil, this func is executed first to determine a suitable exit code.
-// Otherwise it proceeds to determine the exit code by the builtin rules below.
+// non-nil, this func is executed first to determine a suitable exit code if
+// err is non-nil. Otherwise it proceeds to determine the exit code by the
+// builtin rules below.
 //
 // Uses the standard library's errors.Is and errors.As functions to also
 // inspect wrapped errors.
@@ -139,7 +140,7 @@ func (e *exitError) ExitCode() int { return e.code }
 //
 // All other errors produce exit code 1.
 func Code(err error) int {
-	if errorHandlerFn != nil {
+	if err != nil && errorHandlerFn != nil {
 		if code, handled := errorHandlerFn(err); handled {
 			return code
 		}
@@ -171,8 +172,13 @@ var (
 // return value to true.
 type ErrorHandlerFunc func(err error) (code int, handled bool)
 
-// SetErrorHandler sets a custom ErrorHandlerFunc. Calling SetErrorHandler
-// is not goroutine-safe. Should be called early in main.
+// SetErrorHandler sets a custom error handler. The error handler is called
+// when Code or Exit are invoked with a non-nil error. If fn does not signal
+// that it handled an error by returning true as its second return value the
+// exit code is determined using the builtin rules.
+//
+// Calling SetErrorHandler is not goroutine-safe. Should be called early in
+// main.
 //
 // See Code for more information.
 func SetErrorHandler(fn ErrorHandlerFunc) {
