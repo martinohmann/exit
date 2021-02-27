@@ -71,8 +71,8 @@ func TestErrorp(t *testing.T) {
 	}
 }
 
-func TestSetStatusHandler(t *testing.T) {
-	SetStatusHandler(func(err error) (code int, handled bool) {
+func TestSetErrorHandler(t *testing.T) {
+	SetErrorHandler(func(err error) (code int, handled bool) {
 		var exitErr ExitError
 
 		switch {
@@ -83,7 +83,7 @@ func TestSetStatusHandler(t *testing.T) {
 			return 0, false
 		}
 	})
-	defer SetStatusHandler(nil)
+	defer SetErrorHandler(nil)
 
 	for _, testCase := range []struct {
 		name string
