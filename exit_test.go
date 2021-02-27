@@ -8,8 +8,6 @@ import (
 	"os/exec"
 	"strconv"
 	"testing"
-
-	"github.com/spf13/pflag"
 )
 
 var errUntyped = errors.New("error")
@@ -31,8 +29,6 @@ func TestExit(t *testing.T) {
 		{name: "nil exit error", err: Error(127, nil), code: 0},
 		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
 		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
-		{name: "pflag.ErrHelp", err: pflag.ErrHelp, code: 2},
-		{name: "wrapped pflag.Help", err: wrapErr(pflag.ErrHelp), code: 2},
 		{name: "exec.ExitError", err: execExitError(10), code: 10},
 		{name: "wrapped exec.ExitError", err: wrapErr(execExitError(3)), code: 3},
 	} {
@@ -132,8 +128,6 @@ func TestSetErrorHandler(t *testing.T) {
 		{name: "nil exit error", err: Error(127, nil), code: 0},
 		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
 		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
-		{name: "pflag.ErrHelp", err: pflag.ErrHelp, code: 2},
-		{name: "wrapped pflag.Help", err: wrapErr(pflag.ErrHelp), code: 2},
 		{name: "exec.ExitError", err: execExitError(10), code: 11},
 		{name: "wrapped exec.ExitError", err: wrapErr(execExitError(3)), code: 4},
 	} {

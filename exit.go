@@ -75,8 +75,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"github.com/spf13/pflag"
 )
 
 // ExitError is an error that can signal the desired exit code. It is
@@ -137,8 +135,7 @@ func (e *exitError) ExitCode() int { return e.code }
 // If an error implements ExitError (e.g. *exec.ExitError) the value
 // returned by err.ExitCode() will be returned.
 //
-// If err contains flag.ErrHelp or github.com/spf13/pflag.ErrHelp, the exit
-// code will be 2.
+// If err contains flag.ErrHelp the exit code will be 2.
 //
 // All other errors produce exit code 1.
 func Code(err error) int {
@@ -153,7 +150,7 @@ func Code(err error) int {
 	switch {
 	case err == nil:
 		return 0
-	case errors.Is(err, flag.ErrHelp) || errors.Is(err, pflag.ErrHelp):
+	case errors.Is(err, flag.ErrHelp):
 		return 2
 	case errors.As(err, &exitErr):
 		return exitErr.ExitCode()
