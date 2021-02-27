@@ -111,6 +111,8 @@ type exitError struct {
 	code int
 }
 
+func (e *exitError) Unwrap() error { return e.error }
+
 func (e *exitError) ExitCode() int { return e.code }
 
 // Status picks a suitable exit code for err. If err is nil the returned code

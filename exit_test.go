@@ -65,6 +65,14 @@ func TestError(t *testing.T) {
 	} else if err.Error() != "the-error" {
 		t.Errorf("got msg %q, want %q", err.Error(), "the-error")
 	}
+
+	origErr := &os.PathError{Err: errors.New("the-error")}
+
+	err = Error(1, origErr)
+	if wrappedErr := errors.Unwrap(err); wrappedErr != origErr {
+		t.Errorf("errors.Unwrap(ExitError), got: %#v, want: %#v",
+			wrappedErr, origErr)
+	}
 }
 
 func TestErrorf(t *testing.T) {
