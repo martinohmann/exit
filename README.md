@@ -5,6 +5,10 @@
 [![GoDoc](https://godoc.org/github.com/martinohmann/exit?status.svg)](https://godoc.org/github.com/martinohmann/exit)
 ![GitHub](https://img.shields.io/github/license/martinohmann/exit?color=orange)
 
+Set a reasonable exit code based on the kind of an error. See the [package
+documentation](https://godoc.org/github.com/martinohmann/exit) for usage
+examples.
+
 ## Installation
 
 ```

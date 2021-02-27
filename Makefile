@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 GOLANGCI_LINT_VERSION ?= v1.31.0
-TEST_FLAGS ?= -race
+TEST_FLAGS ?= -race -v
 PKG_BASE ?= $(shell go list .)
 PKGS ?= $(shell go list ./... | grep -v /vendor/)
 
