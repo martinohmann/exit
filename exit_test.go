@@ -51,6 +51,33 @@ func TestExit(t *testing.T) {
 	}
 }
 
+func TestError(t *testing.T) {
+	err := Error(123, nil)
+	if err != nil {
+		t.Errorf("got %#v, want nil", err)
+	}
+
+	err = Error(123, errors.New("the-error"))
+	if exitErr, ok := err.(ExitError); !ok {
+		t.Errorf("got %#v, want ExitError", err)
+	} else if code := exitErr.ExitCode(); code != 123 {
+		t.Errorf("got ExitError with code %d, want 123", code)
+	} else if err.Error() != "the-error" {
+		t.Errorf("got msg %q, want %q", err.Error(), "the-error")
+	}
+}
+
+func TestErrorf(t *testing.T) {
+	err := Errorf(123, "error: %s", "some-arg")
+	if exitErr, ok := err.(ExitError); !ok {
+		t.Errorf("got %#v, want ExitError", err)
+	} else if code := exitErr.ExitCode(); code != 123 {
+		t.Errorf("got ExitError with code %d, want 123", code)
+	} else if err.Error() != "error: some-arg" {
+		t.Errorf("got msg %q, want %q", err.Error(), "error: some-arg")
+	}
+}
+
 func TestErrorp(t *testing.T) {
 	var err error
 	Errorp(127, &err)

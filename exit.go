@@ -27,6 +27,10 @@
 //     exit.Exit(foo())  // May produce exit code 0 on success, 127 on error.
 //   }
 //
+// Directly construct an error of type ExitError with a specific status code:
+//
+//   exit.Errorf(code, "failed to do the thing: %w", err)
+//
 // Errors can also be wrapped in a defer statement via Errorp:
 //
 //   func foo() (err error) {
@@ -60,6 +64,7 @@ package exit
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/spf13/pflag"
@@ -80,6 +85,12 @@ func Error(code int, err error) error {
 	}
 
 	return &exitError{err, code}
+}
+
+// Errorf creates a new error and wraps it into an ExitError with given exit
+// code. Format and args are used to build the wrapped error via fmt.Errorf.
+func Errorf(code int, format string, args ...interface{}) error {
+	return &exitError{fmt.Errorf(format, args...), code}
 }
 
 // Errorp wraps the pointed-to error with an ExitError and sets err to the new
