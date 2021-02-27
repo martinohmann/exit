@@ -27,6 +27,19 @@
 //     exit.Exit(foo())  // May produce exit code 0 on success, 127 on error.
 //   }
 //
+// Errors can also be wrapped in a defer statement via Errorp:
+//
+//   func foo() (err error) {
+//     defer exit.Errorp(127, &err)
+//     err = someOperation()
+//     if err != nil {
+//       return
+//     }
+//
+//     err = someOtherOperation()
+//     return
+//   }
+//
 package exit
 
 import (
@@ -52,6 +65,19 @@ func Error(code int, err error) error {
 	}
 
 	return &exitError{err, code}
+}
+
+// Errorp wraps the pointed-to error with an ExitError and sets err to the new
+// value. If the value of err a nil it is not wrapped. Can be used in defer
+// statements to wrap errors before returning them.
+//
+// Example:
+//
+//   defer exit.Errorp(127, &err)
+//
+// See Error for more information.
+func Errorp(code int, err *error) {
+	*err = Error(code, *err)
 }
 
 type exitError struct {

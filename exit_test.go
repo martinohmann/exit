@@ -45,6 +45,26 @@ func TestExit(t *testing.T) {
 	}
 }
 
+func TestErrorp(t *testing.T) {
+	var err error
+	Errorp(127, &err)
+
+	if err != nil {
+		t.Errorf("got %#v, want nil", err)
+	}
+
+	err = errors.New("error")
+
+	Errorp(127, &err)
+	if err == nil {
+		t.Error("got nil, want ExitError")
+	} else if exitErr, ok := err.(ExitError); !ok {
+		t.Errorf("got %#v, want ExitError", err)
+	} else if code := exitErr.ExitCode(); code != 127 {
+		t.Errorf("got ExitError with code %d, want 127", code)
+	}
+}
+
 // TestProcessExitCodeHelper is a helper to produce *exec.ExitError with a user
 // defined exit code in unit tests.
 func TestProcessExitCodeHelper(t *testing.T) {
