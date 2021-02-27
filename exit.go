@@ -1,5 +1,5 @@
-// Package exit provides helpers for wrapping errors with exit code information
-// and conversely to produce meaningful exit codes based on errors.
+// Package exit wrap errors with exit code information and conversely produces
+// meaningful exit codes based on errors.
 //
 // Errors can be passed to Exit to exit the program with a meaningful exit code
 // based on the kind and type of error:
