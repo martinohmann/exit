@@ -138,7 +138,7 @@ func TestSetErrorHandler(t *testing.T) {
 		{name: "wrapped exec.ExitError", err: wrapErr(execExitError(3)), code: 4},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			if got := Status(testCase.err); got != testCase.code {
+			if got := Code(testCase.err); got != testCase.code {
 				t.Errorf("got %d, want %d", got, testCase.code)
 			}
 		})

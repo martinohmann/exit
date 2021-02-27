@@ -1,15 +1,15 @@
-// Package exit provides a helper to choose a reasonable exit code based on
-// errors.
+// Package exit provides helpers for wrapping errors with exit code information
+// and conversely to produce meaningful exit codes based on errors.
 //
 // Errors can be passed to Exit to exit the program with a meaningful exit code
 // based on the kind and type of error:
 //
 //   exit.Exit(err)
 //
-// Alternatively the exit code for an error can be computed via Status and used
+// Alternatively the exit code for an error can be computed via Code and used
 // later:
 //
-//   code := exit.Status(err)
+//   code := exit.Code(err)
 //
 //   os.Exit(code)
 //
@@ -24,12 +24,15 @@
 //   }
 //
 //   func main() {
-//     exit.Exit(foo())  // May produce exit code 0 on success, 127 on error.
+//     // Produces exit code 0 on success, 127 on error.
+//     exit.Exit(foo())
 //   }
 //
-// Directly construct an error of type ExitError with a specific status code:
+// Directly construct an error of type ExitError with a specific exit code or
+// wrap an existing error with more context:
 //
-//   exit.Errorf(code, "failed to do the thing: %w", err)
+//   err1 := exit.Errorf(code, "failed to do the thing")
+//   err2 := exit.Errorf(code, "failed to do the other thing: %w", err)
 //
 // Errors can also be wrapped in a defer statement via Errorp:
 //
@@ -44,7 +47,13 @@
 //     return
 //   }
 //
-// It is also possible to set a custom error handler via SetErrorHandler:
+//   func main() {
+//     // Produces exit code 0 on success, 127 on error.
+//     exit.Exit(foo())
+//   }
+//
+// Mapping of errors to exit code can also be controlled by setting a custom
+// error handler via SetErrorHandler:
 //
 //   func main() {
 //     exit.SetErrorHandler(func(err error) (code int, handled bool) {
@@ -115,7 +124,7 @@ func (e *exitError) Unwrap() error { return e.error }
 
 func (e *exitError) ExitCode() int { return e.code }
 
-// Status picks a suitable exit code for err. If err is nil the returned code
+// Code picks a suitable exit code for err. If err is nil the returned code
 // is 0. Otherwise it attempts to provide a meaningful exit code for err.
 //
 // If a custom error handler func was set via SetErrorHandler and it is
@@ -132,7 +141,7 @@ func (e *exitError) ExitCode() int { return e.code }
 // code will be 2.
 //
 // All other errors produce exit code 1.
-func Status(err error) int {
+func Code(err error) int {
 	if errorHandlerFn != nil {
 		if code, handled := errorHandlerFn(err); handled {
 			return code
@@ -168,7 +177,7 @@ type ErrorHandlerFunc func(err error) (code int, handled bool)
 // SetErrorHandler sets a custom ErrorHandlerFunc. Calling SetErrorHandler
 // is not goroutine-safe. Should be called early in main.
 //
-// See Status for more information.
+// See Code for more information.
 func SetErrorHandler(fn ErrorHandlerFunc) {
 	errorHandlerFn = fn
 }
@@ -176,7 +185,7 @@ func SetErrorHandler(fn ErrorHandlerFunc) {
 // Exit is a convenience alternative for os.Exit. Calls os.Exit with the exit
 // code obtained from err. If err is nil this is equivalent to os.Exit(0).
 //
-// See Status for possible exit codes.
+// See Code for possible exit codes.
 func Exit(err error) {
-	osExit(Status(err))
+	osExit(Code(err))
 }
