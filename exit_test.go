@@ -22,13 +22,13 @@ func TestExit(t *testing.T) {
 		err  error
 		code int
 	}{
-		{name: "no error", code: 0},
-		{name: "untyped error", err: errUntyped, code: 1},
+		{name: "no error", code: CodeOK},
+		{name: "untyped error", err: errUntyped, code: CodeErr},
 		{name: "ExitError", err: Error(127, errUntyped), code: 127},
 		{name: "wrapped ExitError", err: wrapErr(Error(127, errUntyped)), code: 127},
-		{name: "nil error wrapped in ExitError", err: Error(127, nil), code: 0},
-		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
-		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
+		{name: "nil error wrapped in ExitError", err: Error(127, nil), code: CodeOK},
+		{name: "flag.ErrHelp", err: flag.ErrHelp, code: CodeHelpErr},
+		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: CodeHelpErr},
 		{name: "exec.ExitError", err: execExitError(10), code: 10},
 		{name: "wrapped exec.ExitError", err: wrapErr(execExitError(3)), code: 3},
 	} {
@@ -48,23 +48,23 @@ func TestExit(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	err := Error(123, nil)
+	err := Error(CodeOSErr, nil)
 	if err != nil {
 		t.Errorf("got %#v, want nil", err)
 	}
 
-	err = Error(123, errors.New("the-error"))
+	err = Error(CodeOSErr, errors.New("the-error"))
 	if exitErr, ok := err.(ExitError); !ok {
 		t.Errorf("got %#v, want ExitError", err)
-	} else if code := exitErr.ExitCode(); code != 123 {
-		t.Errorf("got ExitError with code %d, want 123", code)
+	} else if code := exitErr.ExitCode(); code != CodeOSErr {
+		t.Errorf("got ExitError with code %d, want %d", code, CodeOSErr)
 	} else if err.Error() != "the-error" {
 		t.Errorf("got msg %q, want %q", err.Error(), "the-error")
 	}
 
 	origErr := &os.PathError{Err: errors.New("the-error")}
 
-	err = Error(1, origErr)
+	err = Error(CodeErr, origErr)
 	if wrappedErr := errors.Unwrap(err); wrappedErr != origErr {
 		t.Errorf("errors.Unwrap(ExitError), got: %#v, want: %#v",
 			wrappedErr, origErr)
@@ -72,11 +72,11 @@ func TestError(t *testing.T) {
 }
 
 func TestErrorf(t *testing.T) {
-	err := Errorf(123, "error: %s", "some-arg")
+	err := Errorf(CodeOSErr, "error: %s", "some-arg")
 	if exitErr, ok := err.(ExitError); !ok {
 		t.Errorf("got %#v, want ExitError", err)
-	} else if code := exitErr.ExitCode(); code != 123 {
-		t.Errorf("got ExitError with code %d, want 123", code)
+	} else if code := exitErr.ExitCode(); code != CodeOSErr {
+		t.Errorf("got ExitError with code %d, want %d", code, CodeOSErr)
 	} else if err.Error() != "error: some-arg" {
 		t.Errorf("got msg %q, want %q", err.Error(), "error: some-arg")
 	}
@@ -84,7 +84,7 @@ func TestErrorf(t *testing.T) {
 
 func TestErrorp(t *testing.T) {
 	var err error
-	Errorp(127, &err)
+	Errorp(CodeUsage, &err)
 
 	if err != nil {
 		t.Errorf("got %#v, want nil", err)
@@ -92,13 +92,13 @@ func TestErrorp(t *testing.T) {
 
 	err = errors.New("error")
 
-	Errorp(127, &err)
+	Errorp(CodeUsage, &err)
 	if err == nil {
 		t.Error("got nil, want ExitError")
 	} else if exitErr, ok := err.(ExitError); !ok {
 		t.Errorf("got %#v, want ExitError", err)
-	} else if code := exitErr.ExitCode(); code != 127 {
-		t.Errorf("got ExitError with code %d, want 127", code)
+	} else if code := exitErr.ExitCode(); code != CodeUsage {
+		t.Errorf("got ExitError with code %d, want %d", code, CodeUsage)
 	}
 }
 
@@ -110,13 +110,12 @@ func TestSetErrorHandler(t *testing.T) {
 
 		var exitErr ExitError
 
-		switch {
-		case errors.As(err, &exitErr):
+		if errors.As(err, &exitErr) {
 			// for testing purposes just add 1 to the existing exit code.
 			return exitErr.ExitCode() + 1, true
-		default:
-			return 0, false
 		}
+
+		return 0, false
 	})
 	defer SetErrorHandler(nil)
 
@@ -125,13 +124,13 @@ func TestSetErrorHandler(t *testing.T) {
 		err  error
 		code int
 	}{
-		{name: "no error", code: 0},
-		{name: "untyped error", err: errUntyped, code: 1},
+		{name: "no error", code: CodeOK},
+		{name: "untyped error", err: errUntyped, code: CodeErr},
 		{name: "ExitError", err: Error(127, errUntyped), code: 128},
 		{name: "wrapped ExitError", err: wrapErr(Error(127, errUntyped)), code: 128},
-		{name: "nil error wrapped in ExitError", err: Error(127, nil), code: 0},
-		{name: "flag.ErrHelp", err: flag.ErrHelp, code: 2},
-		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: 2},
+		{name: "nil error wrapped in ExitError", err: Error(127, nil), code: CodeOK},
+		{name: "flag.ErrHelp", err: flag.ErrHelp, code: CodeHelpErr},
+		{name: "wrapped flag.Help", err: wrapErr(flag.ErrHelp), code: CodeHelpErr},
 		{name: "exec.ExitError", err: execExitError(10), code: 11},
 		{name: "wrapped exec.ExitError", err: wrapErr(execExitError(3)), code: 4},
 	} {

@@ -19,12 +19,12 @@
 //   func foo() error {
 //     err := someOperation()
 //
-//     // Wraps err in an ExitError with code 127 if err is non-nil.
-//     return exit.Error(127, err)
+//     // Wraps err in an ExitError with code 74 if err is non-nil.
+//     return exit.Error(exit.CodeIOErr, err)
 //   }
 //
 //   func main() {
-//     // Produces exit code 0 on success, 127 on error.
+//     // Produces exit code 0 on success, 74 on error.
 //     exit.Exit(foo())
 //   }
 //
@@ -37,7 +37,7 @@
 // Errors can also be wrapped in a defer statement via Errorp:
 //
 //   func foo() (err error) {
-//     defer exit.Errorp(127, &err)
+//     defer exit.Errorp(exit.CodeNoPerm, &err)
 //     err = someOperation()
 //     if err != nil {
 //       return
@@ -48,7 +48,7 @@
 //   }
 //
 //   func main() {
-//     // Produces exit code 0 on success, 127 on error.
+//     // Produces exit code 0 on success, 77 on error.
 //     exit.Exit(foo())
 //   }
 //
@@ -59,12 +59,12 @@
 //     exit.SetErrorHandler(func(err error) (code int, handled bool) {
 //       var customErr CustomError
 //       if errors.As(err, &customErr) {
-//         return 123, true
+//         return exit.CodeUsage, true
 //       }
 //       return 0, false
 //     })
 //
-//     // Produces exit code 123 if someOperation returns CustomError.
+//     // Produces exit code 64 if someOperation returns CustomError.
 //     exit.Exit(someOperation())
 //   }
 //
@@ -106,7 +106,7 @@ func Errorf(code int, format string, args ...interface{}) error {
 //
 // Example:
 //
-//   defer exit.Errorp(127, &err)
+//   defer exit.Errorp(exit.CodeOSErr, &err)
 //
 // See Error for more information.
 func Errorp(code int, err *error) {
@@ -150,13 +150,13 @@ func Code(err error) int {
 
 	switch {
 	case err == nil:
-		return 0
+		return CodeOK
 	case errors.Is(err, flag.ErrHelp):
-		return 2
+		return CodeHelpErr
 	case errors.As(err, &exitErr):
 		return exitErr.ExitCode()
 	default:
-		return 1
+		return CodeErr
 	}
 }
 
