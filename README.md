@@ -6,7 +6,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/martinohmann/exit.svg)](https://pkg.go.dev/github.com/martinohmann/exit)
 ![GitHub](https://img.shields.io/github/license/martinohmann/exit?color=orange)
 
-Wrap errors with exit code information and conversely produces meaningful exit
+Wraps errors with exit code information and conversely produces meaningful exit
 codes based on errors.
 
 See the [package
